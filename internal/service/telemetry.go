@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"Frank2006xmotorq/db/sqlc"
@@ -25,15 +24,15 @@ type CreateTelemetryRequest struct {
 	FuelLevelPercent  float64   `json:"fuel_level_percent"`
 	EngineState       string    `json:"engine_state"`
 	OdometerMiles     float64   `json:"odometer_miles"`
-}
-
-func floatToNumeric(f float64) pgtype.Numeric {
-	var n pgtype.Numeric
-	n.Scan(fmt.Sprintf("%f", f))
-	return n
+	Status            string    `json:"status"`
 }
 
 func (s *TelemetryService) Create(ctx context.Context, req CreateTelemetryRequest) (sqlc.TelemetryHistory, error) {
+	status := req.Status
+	if status == "" {
+		status = "pending"
+	}
+
 	return s.q.CreateTelemetryHistory(ctx, sqlc.CreateTelemetryHistoryParams{
 		VehicleID:         req.VehicleID,
 		Timestamp:         pgtype.Timestamp{Time: req.Timestamp, Valid: true},
@@ -41,6 +40,7 @@ func (s *TelemetryService) Create(ctx context.Context, req CreateTelemetryReques
 		FuelLevelPercent:  floatToNumeric(req.FuelLevelPercent),
 		EngineState:       req.EngineState,
 		OdometerMiles:     floatToNumeric(req.OdometerMiles),
+		Status:            status,
 	})
 }
 
@@ -56,5 +56,12 @@ func (s *TelemetryService) ListLatestByVehicle(ctx context.Context, vehicleID in
 	return s.q.ListLatestTelemetryByVehicle(ctx, sqlc.ListLatestTelemetryByVehicleParams{
 		VehicleID: vehicleID,
 		Limit:     limit,
+	})
+}
+
+func (s *TelemetryService) UpdateStatus(ctx context.Context, id int64, status string) (sqlc.TelemetryHistory, error) {
+	return s.q.UpdateTelemetryHistoryStatus(ctx, sqlc.UpdateTelemetryHistoryStatusParams{
+		ID:     id,
+		Status: status,
 	})
 }

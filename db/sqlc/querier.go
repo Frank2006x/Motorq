@@ -10,19 +10,28 @@ import (
 
 type Querier interface {
 	CreateFleet(ctx context.Context, arg CreateFleetParams) (Fleet, error)
+	CreateSimpleRuleFleet(ctx context.Context, arg CreateSimpleRuleFleetParams) (SimpleRuleFleet, error)
+	CreateSimpleRuleVehicle(ctx context.Context, arg CreateSimpleRuleVehicleParams) (SimpleRuleVehicle, error)
 	CreateTelemetryHistory(ctx context.Context, arg CreateTelemetryHistoryParams) (TelemetryHistory, error)
 	CreateVehicle(ctx context.Context, arg CreateVehicleParams) (Vehicle, error)
 	DeleteFleet(ctx context.Context, id int64) (Fleet, error)
+	DeleteSimpleRuleFleet(ctx context.Context, id int64) (SimpleRuleFleet, error)
+	DeleteSimpleRuleVehicle(ctx context.Context, id int64) (SimpleRuleVehicle, error)
 	DeleteVehicle(ctx context.Context, id int64) (Vehicle, error)
 	GetFleet(ctx context.Context, id int64) (Fleet, error)
+	GetSimpleRuleFleet(ctx context.Context, id int64) (SimpleRuleFleet, error)
+	GetSimpleRuleVehicle(ctx context.Context, id int64) (SimpleRuleVehicle, error)
 	GetTelemetryHistory(ctx context.Context, id int64) (TelemetryHistory, error)
 	GetVehicle(ctx context.Context, id int64) (Vehicle, error)
 	ListFleets(ctx context.Context) ([]Fleet, error)
 	ListLatestTelemetryByVehicle(ctx context.Context, arg ListLatestTelemetryByVehicleParams) ([]TelemetryHistory, error)
+	ListSimpleRuleFleetByFleet(ctx context.Context, fleetID int64) ([]SimpleRuleFleet, error)
+	ListSimpleRuleVehicleByVehicle(ctx context.Context, vehicleID int64) ([]SimpleRuleVehicle, error)
 	ListTelemetryHistoryByVehicle(ctx context.Context, vehicleID int64) ([]TelemetryHistory, error)
 	ListVehicles(ctx context.Context) ([]Vehicle, error)
 	ListVehiclesByFleet(ctx context.Context, fleetID int64) ([]Vehicle, error)
 	UpdateFleet(ctx context.Context, arg UpdateFleetParams) (Fleet, error)
+	UpdateTelemetryHistoryStatus(ctx context.Context, arg UpdateTelemetryHistoryStatusParams) (TelemetryHistory, error)
 	UpdateVehicle(ctx context.Context, arg UpdateVehicleParams) (Vehicle, error)
 }
 

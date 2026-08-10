@@ -12,9 +12,9 @@ import (
 )
 
 const createTelemetryHistory = `-- name: CreateTelemetryHistory :one
-INSERT INTO telemetry_history (vehicle_id, timestamp, speed_mph, fuel_level_percent, engine_state, odometer_miles)
-VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING id, vehicle_id, timestamp, speed_mph, fuel_level_percent, engine_state, odometer_miles
+INSERT INTO telemetry_history (vehicle_id, timestamp, speed_mph, fuel_level_percent, engine_state, odometer_miles, status)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+RETURNING id, vehicle_id, timestamp, speed_mph, fuel_level_percent, engine_state, odometer_miles, status
 `
 
 type CreateTelemetryHistoryParams struct {
@@ -24,6 +24,7 @@ type CreateTelemetryHistoryParams struct {
 	FuelLevelPercent pgtype.Numeric   `json:"fuel_level_percent"`
 	EngineState      string           `json:"engine_state"`
 	OdometerMiles    pgtype.Numeric   `json:"odometer_miles"`
+	Status           string           `json:"status"`
 }
 
 func (q *Queries) CreateTelemetryHistory(ctx context.Context, arg CreateTelemetryHistoryParams) (TelemetryHistory, error) {
@@ -34,6 +35,7 @@ func (q *Queries) CreateTelemetryHistory(ctx context.Context, arg CreateTelemetr
 		arg.FuelLevelPercent,
 		arg.EngineState,
 		arg.OdometerMiles,
+		arg.Status,
 	)
 	var i TelemetryHistory
 	err := row.Scan(
@@ -44,12 +46,13 @@ func (q *Queries) CreateTelemetryHistory(ctx context.Context, arg CreateTelemetr
 		&i.FuelLevelPercent,
 		&i.EngineState,
 		&i.OdometerMiles,
+		&i.Status,
 	)
 	return i, err
 }
 
 const getTelemetryHistory = `-- name: GetTelemetryHistory :one
-SELECT id, vehicle_id, timestamp, speed_mph, fuel_level_percent, engine_state, odometer_miles
+SELECT id, vehicle_id, timestamp, speed_mph, fuel_level_percent, engine_state, odometer_miles, status
 FROM telemetry_history
 WHERE id = $1
 `
@@ -65,12 +68,13 @@ func (q *Queries) GetTelemetryHistory(ctx context.Context, id int64) (TelemetryH
 		&i.FuelLevelPercent,
 		&i.EngineState,
 		&i.OdometerMiles,
+		&i.Status,
 	)
 	return i, err
 }
 
 const listLatestTelemetryByVehicle = `-- name: ListLatestTelemetryByVehicle :many
-SELECT id, vehicle_id, timestamp, speed_mph, fuel_level_percent, engine_state, odometer_miles
+SELECT id, vehicle_id, timestamp, speed_mph, fuel_level_percent, engine_state, odometer_miles, status
 FROM telemetry_history
 WHERE vehicle_id = $1
 ORDER BY timestamp DESC
@@ -99,6 +103,7 @@ func (q *Queries) ListLatestTelemetryByVehicle(ctx context.Context, arg ListLate
 			&i.FuelLevelPercent,
 			&i.EngineState,
 			&i.OdometerMiles,
+			&i.Status,
 		); err != nil {
 			return nil, err
 		}
@@ -111,7 +116,7 @@ func (q *Queries) ListLatestTelemetryByVehicle(ctx context.Context, arg ListLate
 }
 
 const listTelemetryHistoryByVehicle = `-- name: ListTelemetryHistoryByVehicle :many
-SELECT id, vehicle_id, timestamp, speed_mph, fuel_level_percent, engine_state, odometer_miles
+SELECT id, vehicle_id, timestamp, speed_mph, fuel_level_percent, engine_state, odometer_miles, status
 FROM telemetry_history
 WHERE vehicle_id = $1
 ORDER BY timestamp DESC
@@ -134,6 +139,7 @@ func (q *Queries) ListTelemetryHistoryByVehicle(ctx context.Context, vehicleID i
 			&i.FuelLevelPercent,
 			&i.EngineState,
 			&i.OdometerMiles,
+			&i.Status,
 		); err != nil {
 			return nil, err
 		}
@@ -143,4 +149,32 @@ func (q *Queries) ListTelemetryHistoryByVehicle(ctx context.Context, vehicleID i
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateTelemetryHistoryStatus = `-- name: UpdateTelemetryHistoryStatus :one
+UPDATE telemetry_history
+SET status = $2
+WHERE id = $1
+RETURNING id, vehicle_id, timestamp, speed_mph, fuel_level_percent, engine_state, odometer_miles, status
+`
+
+type UpdateTelemetryHistoryStatusParams struct {
+	ID     int64  `json:"id"`
+	Status string `json:"status"`
+}
+
+func (q *Queries) UpdateTelemetryHistoryStatus(ctx context.Context, arg UpdateTelemetryHistoryStatusParams) (TelemetryHistory, error) {
+	row := q.db.QueryRow(ctx, updateTelemetryHistoryStatus, arg.ID, arg.Status)
+	var i TelemetryHistory
+	err := row.Scan(
+		&i.ID,
+		&i.VehicleID,
+		&i.Timestamp,
+		&i.SpeedMph,
+		&i.FuelLevelPercent,
+		&i.EngineState,
+		&i.OdometerMiles,
+		&i.Status,
+	)
+	return i, err
 }
