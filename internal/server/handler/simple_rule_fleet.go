@@ -30,6 +30,12 @@ func (h *SimpleRuleFleetHandler) Create(c fiber.Ctx) error {
 		})
 	}
 
+	if req.Operator == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "operator is required (use '>' or '<')",
+		})
+	}
+
 	if req.Priority == "" {
 		req.Priority = "low"
 	}

@@ -15,16 +15,18 @@ func NewSimpleRuleVehicleService(q *sqlc.Queries) *SimpleRuleVehicleService {
 }
 
 type CreateSimpleRuleVehicleRequest struct {
-	VehicleID      int64         `json:"vehicle_id"`
-	TargetField    string        `json:"target_field"`
-	ThresholdValue float64       `json:"threshold_value"`
-	Priority       sqlc.Priority `json:"priority"`
+	VehicleID      int64             `json:"vehicle_id"`
+	TargetField    string            `json:"target_field"`
+	Operator       sqlc.RuleOperator `json:"operator"`
+	ThresholdValue float64           `json:"threshold_value"`
+	Priority       sqlc.Priority     `json:"priority"`
 }
 
 func (s *SimpleRuleVehicleService) Create(ctx context.Context, req CreateSimpleRuleVehicleRequest) (sqlc.SimpleRuleVehicle, error) {
 	return s.q.CreateSimpleRuleVehicle(ctx, sqlc.CreateSimpleRuleVehicleParams{
 		VehicleID:      req.VehicleID,
 		TargetField:    req.TargetField,
+		Operator:       req.Operator,
 		ThresholdValue: floatToNumeric(req.ThresholdValue),
 		Priority:       req.Priority,
 	})

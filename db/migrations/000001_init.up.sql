@@ -28,11 +28,15 @@ CREATE TABLE telemetry_history (
 -- Create priority enum
 CREATE TYPE priority AS ENUM ('low', 'mid', 'high');
 
+-- Create operator enum
+CREATE TYPE rule_operator AS ENUM ('>', '<');
+
 -- Create simple rule fleet table
 CREATE TABLE simple_rule_fleet (
     id              BIGSERIAL PRIMARY KEY,
     fleet_id        BIGINT NOT NULL REFERENCES fleet(id),
     target_field    VARCHAR(100) NOT NULL,
+    operator        rule_operator NOT NULL,
     threshold_value DECIMAL(12, 2) NOT NULL,
     priority        priority NOT NULL DEFAULT 'low'
 );
@@ -42,6 +46,7 @@ CREATE TABLE simple_rule_vehicle (
     id              BIGSERIAL PRIMARY KEY,
     vehicle_id      BIGINT NOT NULL REFERENCES vehicle(id),
     target_field    VARCHAR(100) NOT NULL,
+    operator        rule_operator NOT NULL,
     threshold_value DECIMAL(12, 2) NOT NULL,
     priority        priority NOT NULL DEFAULT 'low'
 );

@@ -10,11 +10,15 @@ import (
 )
 
 type TelemetryHandler struct {
-	svc *service.TelemetryService
+	svc        *service.TelemetryService
+	evaluator  *service.RuleEvaluator
 }
 
-func NewTelemetryHandler(svc *service.TelemetryService) *TelemetryHandler {
-	return &TelemetryHandler{svc: svc}
+func NewTelemetryHandler(svc *service.TelemetryService, evaluator *service.RuleEvaluator) *TelemetryHandler {
+	return &TelemetryHandler{
+		svc:       svc,
+		evaluator: evaluator,
+	}
 }
 
 func (h *TelemetryHandler) Create(c fiber.Ctx) error {
@@ -41,6 +45,14 @@ func (h *TelemetryHandler) Create(c fiber.Ctx) error {
 			"error": err.Error(),
 		})
 	}
+
+	// Evaluate rules for the new telemetry
+	// Run in background to not block the response
+	go func() {
+		if h.evaluator != nil {
+			_ = h.evaluator.CheckRulesAndUpdateStatus(c.Context(), telemetry.ID)
+		}
+	}()
 
 	return c.Status(fiber.StatusCreated).JSON(telemetry)
 }

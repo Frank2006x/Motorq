@@ -54,6 +54,48 @@ func (ns NullPriority) Value() (driver.Value, error) {
 	return string(ns.Priority), nil
 }
 
+type RuleOperator string
+
+const (
+	RuleOperatorValue0 RuleOperator = ">"
+	RuleOperatorValue1 RuleOperator = "<"
+)
+
+func (e *RuleOperator) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = RuleOperator(s)
+	case string:
+		*e = RuleOperator(s)
+	default:
+		return fmt.Errorf("unsupported scan type for RuleOperator: %T", src)
+	}
+	return nil
+}
+
+type NullRuleOperator struct {
+	RuleOperator RuleOperator `json:"rule_operator"`
+	Valid        bool         `json:"valid"` // Valid is true if RuleOperator is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullRuleOperator) Scan(value interface{}) error {
+	if value == nil {
+		ns.RuleOperator, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.RuleOperator.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullRuleOperator) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.RuleOperator), nil
+}
+
 type Fleet struct {
 	ID    int64  `json:"id"`
 	Name  string `json:"name"`
@@ -64,6 +106,7 @@ type SimpleRuleFleet struct {
 	ID             int64          `json:"id"`
 	FleetID        int64          `json:"fleet_id"`
 	TargetField    string         `json:"target_field"`
+	Operator       RuleOperator   `json:"operator"`
 	ThresholdValue pgtype.Numeric `json:"threshold_value"`
 	Priority       Priority       `json:"priority"`
 }
@@ -72,6 +115,7 @@ type SimpleRuleVehicle struct {
 	ID             int64          `json:"id"`
 	VehicleID      int64          `json:"vehicle_id"`
 	TargetField    string         `json:"target_field"`
+	Operator       RuleOperator   `json:"operator"`
 	ThresholdValue pgtype.Numeric `json:"threshold_value"`
 	Priority       Priority       `json:"priority"`
 }

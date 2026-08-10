@@ -12,6 +12,7 @@ import (
 	"Frank2006xmotorq/internal/service"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/logger"
 )
 
 func main() {
@@ -31,17 +32,18 @@ func main() {
 	fleetSvc := service.NewFleetService(queries)
 	vehicleSvc := service.NewVehicleService(queries)
 	telemetrySvc := service.NewTelemetryService(queries)
+	ruleEvaluator := service.NewRuleEvaluator(queries)
 	simpleRuleFleetSvc := service.NewSimpleRuleFleetService(queries)
 	simpleRuleVehicleSvc := service.NewSimpleRuleVehicleService(queries)
 
 	fleetHandler := handler.NewFleetHandler(fleetSvc)
 	vehicleHandler := handler.NewVehicleHandler(vehicleSvc)
-	telemetryHandler := handler.NewTelemetryHandler(telemetrySvc)
+	telemetryHandler := handler.NewTelemetryHandler(telemetrySvc, ruleEvaluator)
 	simpleRuleFleetHandler := handler.NewSimpleRuleFleetHandler(simpleRuleFleetSvc)
 	simpleRuleVehicleHandler := handler.NewSimpleRuleVehicleHandler(simpleRuleVehicleSvc)
 
 	app := fiber.New()
-
+	app.Use(logger.New())
 	app.Get("/ping", func(c fiber.Ctx) error {
 		return c.SendString("pong")
 	})

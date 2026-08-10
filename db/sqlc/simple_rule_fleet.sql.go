@@ -12,14 +12,15 @@ import (
 )
 
 const createSimpleRuleFleet = `-- name: CreateSimpleRuleFleet :one
-INSERT INTO simple_rule_fleet (fleet_id, target_field, threshold_value, priority)
-VALUES ($1, $2, $3, $4)
-RETURNING id, fleet_id, target_field, threshold_value, priority
+INSERT INTO simple_rule_fleet (fleet_id, target_field, operator, threshold_value, priority)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING id, fleet_id, target_field, operator, threshold_value, priority
 `
 
 type CreateSimpleRuleFleetParams struct {
 	FleetID        int64          `json:"fleet_id"`
 	TargetField    string         `json:"target_field"`
+	Operator       RuleOperator   `json:"operator"`
 	ThresholdValue pgtype.Numeric `json:"threshold_value"`
 	Priority       Priority       `json:"priority"`
 }
@@ -28,6 +29,7 @@ func (q *Queries) CreateSimpleRuleFleet(ctx context.Context, arg CreateSimpleRul
 	row := q.db.QueryRow(ctx, createSimpleRuleFleet,
 		arg.FleetID,
 		arg.TargetField,
+		arg.Operator,
 		arg.ThresholdValue,
 		arg.Priority,
 	)
@@ -36,6 +38,7 @@ func (q *Queries) CreateSimpleRuleFleet(ctx context.Context, arg CreateSimpleRul
 		&i.ID,
 		&i.FleetID,
 		&i.TargetField,
+		&i.Operator,
 		&i.ThresholdValue,
 		&i.Priority,
 	)
@@ -45,7 +48,7 @@ func (q *Queries) CreateSimpleRuleFleet(ctx context.Context, arg CreateSimpleRul
 const deleteSimpleRuleFleet = `-- name: DeleteSimpleRuleFleet :one
 DELETE FROM simple_rule_fleet
 WHERE id = $1
-RETURNING id, fleet_id, target_field, threshold_value, priority
+RETURNING id, fleet_id, target_field, operator, threshold_value, priority
 `
 
 func (q *Queries) DeleteSimpleRuleFleet(ctx context.Context, id int64) (SimpleRuleFleet, error) {
@@ -55,6 +58,7 @@ func (q *Queries) DeleteSimpleRuleFleet(ctx context.Context, id int64) (SimpleRu
 		&i.ID,
 		&i.FleetID,
 		&i.TargetField,
+		&i.Operator,
 		&i.ThresholdValue,
 		&i.Priority,
 	)
@@ -62,7 +66,7 @@ func (q *Queries) DeleteSimpleRuleFleet(ctx context.Context, id int64) (SimpleRu
 }
 
 const getSimpleRuleFleet = `-- name: GetSimpleRuleFleet :one
-SELECT id, fleet_id, target_field, threshold_value, priority
+SELECT id, fleet_id, target_field, operator, threshold_value, priority
 FROM simple_rule_fleet
 WHERE id = $1
 `
@@ -74,6 +78,7 @@ func (q *Queries) GetSimpleRuleFleet(ctx context.Context, id int64) (SimpleRuleF
 		&i.ID,
 		&i.FleetID,
 		&i.TargetField,
+		&i.Operator,
 		&i.ThresholdValue,
 		&i.Priority,
 	)
@@ -81,7 +86,7 @@ func (q *Queries) GetSimpleRuleFleet(ctx context.Context, id int64) (SimpleRuleF
 }
 
 const listSimpleRuleFleetByFleet = `-- name: ListSimpleRuleFleetByFleet :many
-SELECT id, fleet_id, target_field, threshold_value, priority
+SELECT id, fleet_id, target_field, operator, threshold_value, priority
 FROM simple_rule_fleet
 WHERE fleet_id = $1
 `
@@ -99,6 +104,7 @@ func (q *Queries) ListSimpleRuleFleetByFleet(ctx context.Context, fleetID int64)
 			&i.ID,
 			&i.FleetID,
 			&i.TargetField,
+			&i.Operator,
 			&i.ThresholdValue,
 			&i.Priority,
 		); err != nil {
