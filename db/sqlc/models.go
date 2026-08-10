@@ -9,3 +9,10 @@ type Fleet struct {
 	Name  string `json:"name"`
 	Email string `json:"email"`
 }
+
+type Vehicle struct {
+	ID      int64  `json:"id"`
+	FleetID int64  `json:"fleet_id"`
+	Model   string `json:"model"`
+	Status  string `json:"status"`
+}

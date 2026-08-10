@@ -10,10 +10,16 @@ import (
 
 type Querier interface {
 	CreateFleet(ctx context.Context, arg CreateFleetParams) (Fleet, error)
+	CreateVehicle(ctx context.Context, arg CreateVehicleParams) (Vehicle, error)
 	DeleteFleet(ctx context.Context, id int64) (Fleet, error)
+	DeleteVehicle(ctx context.Context, id int64) (Vehicle, error)
 	GetFleet(ctx context.Context, id int64) (Fleet, error)
+	GetVehicle(ctx context.Context, id int64) (Vehicle, error)
 	ListFleets(ctx context.Context) ([]Fleet, error)
+	ListVehicles(ctx context.Context) ([]Vehicle, error)
+	ListVehiclesByFleet(ctx context.Context, fleetID int64) ([]Vehicle, error)
 	UpdateFleet(ctx context.Context, arg UpdateFleetParams) (Fleet, error)
+	UpdateVehicle(ctx context.Context, arg UpdateVehicleParams) (Vehicle, error)
 }
 
 var _ Querier = (*Queries)(nil)
