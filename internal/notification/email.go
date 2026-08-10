@@ -27,19 +27,3 @@ func (s *EmailService) SendAlertEmail(ctx context.Context, to string, subject st
 
 	return nil
 }
-
-// SendRuleViolationAlert sends an alert when a rule is violated
-func (s *EmailService) SendRuleViolationAlert(ctx context.Context, fleetEmail string, vehicleModel string, message string, priority string) error {
-	subject := fmt.Sprintf("[%s Priority] Vehicle Rule Violation Alert", priority)
-	body := fmt.Sprintf(
-		"Vehicle Rule Violation Detected\n\n"+
-			"Vehicle: %s\n"+
-			"Alert: %s\n"+
-			"Please review the telemetry data and take necessary action.\n\n"+
-			"This is an automated alert from MotorQ Fleet Management System.",
-		vehicleModel,
-		message,
-	)
-
-	return s.SendAlertEmail(ctx, fleetEmail, subject, body)
-}

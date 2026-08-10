@@ -5,21 +5,41 @@ import (
 	"fmt"
 
 	"Frank2006xmotorq/db/sqlc"
-	"Frank2006xmotorq/internal/notification"
+	"Frank2006xmotorq/internal/queue"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type RuleEvaluator struct {
-	q             *sqlc.Queries
-	emailService  *notification.EmailService
+	q               *sqlc.Queries
+	alertProcessor  queue.Processor
 }
 
 func NewRuleEvaluator(q *sqlc.Queries) *RuleEvaluator {
 	return &RuleEvaluator{
-		q:             q,
-		emailService:  notification.NewEmailService(),
+		q:               q,
+		alertProcessor:  nil,
 	}
+}
+
+// SetProcessor sets the alert processor (for RabbitMQ initialization)
+func (e *RuleEvaluator) SetProcessor(processor queue.Processor) {
+	e.alertProcessor = processor
+}
+
+// StartWorker starts the alert processing worker
+func (e *RuleEvaluator) StartWorker(ctx context.Context) {
+	e.alertProcessor.StartWorker(ctx)
+}
+
+// StopWorker stops the alert processing worker
+func (e *RuleEvaluator) StopWorker() {
+	e.alertProcessor.Stop()
+}
+
+// GetQueueStats returns current queue statistics
+func (e *RuleEvaluator) GetQueueStats() (high, mid, low int) {
+	return e.alertProcessor.GetQueueStats()
 }
 
 // RuleResult holds the result of evaluating a rule
@@ -164,14 +184,14 @@ func (e *RuleEvaluator) numericToFloat64(n pgtype.Numeric) float64 {
 }
 
 // CheckRulesAndUpdateStatus checks all rules and updates telemetry status
-// Sends email alerts for any rule violations
+// Publishes alerts to queue for any rule violations
 func (e *RuleEvaluator) CheckRulesAndUpdateStatus(ctx context.Context, telemetryID int64) error {
 	telemetry, err := e.q.GetTelemetryHistory(ctx, telemetryID)
 	if err != nil {
 		return err
 	}
 
-	// Get vehicle and fleet info for email
+	// Get vehicle and fleet info for alert
 	vehicle, err := e.q.GetVehicle(ctx, telemetry.VehicleID)
 	if err != nil {
 		return err
@@ -187,22 +207,25 @@ func (e *RuleEvaluator) CheckRulesAndUpdateStatus(ctx context.Context, telemetry
 		return err
 	}
 
-	// Determine overall status and send emails for violations
+	// Determine overall status and publish alerts for violations
 	allPassed := true
 	for _, result := range results {
 		if !result.Passed {
 			allPassed = false
-			// Send email alert for this violation
-			fmt.Printf("🚨 Rule Violation: %s\n", result.Message)
-			err := e.emailService.SendRuleViolationAlert(
-				ctx,
-				fleet.Email,
-				vehicle.Model,
-				result.Message,
-				string(result.Priority),
-			)
-			if err != nil {
-				fmt.Printf("❌ Failed to send alert email: %v\n", err)
+
+			// Log violation
+			fmt.Printf("🚨 Rule Violation [%s]: %s\n", result.Priority, result.Message)
+
+			// Publish alert to queue (email only sends when high/mid queues are empty)
+			alert := queue.Message{
+				FleetEmail:   fleet.Email,
+				VehicleModel: vehicle.Model,
+				Message:      result.Message,
+				Priority:     string(result.Priority),
+			}
+
+			if err := e.alertProcessor.PublishAlert(alert); err != nil {
+				fmt.Printf("❌ Failed to publish alert: %v\n", err)
 			}
 		}
 	}
