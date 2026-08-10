@@ -1,7 +1,0 @@
-db:
-  host: localhost
-  port: "5432"
-  user: root
-  password: secret
-  dbname: motorq
-  sslmode: disable
