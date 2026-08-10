@@ -1,0 +1,29 @@
+services:
+  postgres:
+    image: postgres:18.4-alpine
+    container_name: motorpostgres
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: motorq
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+
+  redis:
+    image: redis:8.8.0-alpine
+    container_name: motorredis
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    image: rabbitmq:4.3.3-management
+    container_name: motorabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    
+
+volumes:
+  postgres_data:
