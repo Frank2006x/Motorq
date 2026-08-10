@@ -9,8 +9,12 @@ import (
 )
 
 type Config struct {
-	POSTGRES_DB          string `mapstructure:"POSTGRES_DB"`
+	POSTGRES_DB string `mapstructure:"POSTGRES_DB"`
+	Server      ServerConfig
+}
 
+type ServerConfig struct {
+	Port string
 }
 
 func LoadConfig(path string) (Config, error) {
@@ -20,19 +24,43 @@ func LoadConfig(path string) (Config, error) {
 	}
 
 	viper.SetConfigFile(configPath)
-
 	viper.AutomaticEnv()
 
-	err = viper.ReadInConfig()
-	if err != nil {
+	if err := viper.ReadInConfig(); err != nil {
 		return Config{}, err
 	}
-	var config Config
 
-	err = viper.Unmarshal(&config)
+	var cfg Config
+	if err := viper.Unmarshal(&cfg); err != nil {
+		return Config{}, err
+	}
 
-	return config, err
+	return cfg, nil
+}
 
+func CheckConfig(cfg Config) error {
+	if cfg.POSTGRES_DB == "" {
+		return fmt.Errorf("POSTGRES_DB is required")
+	}
+	if cfg.Server.Port == "" {
+		cfg.Server.Port = "8080"
+	}
+	return nil
+}
+
+func MustLoadConfig(path string) Config {
+	cfg, err := LoadConfig(path)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to load config: %v\n", err)
+		os.Exit(1)
+	}
+
+	if err := CheckConfig(cfg); err != nil {
+		fmt.Fprintf(os.Stderr, "config validation failed: %v\n", err)
+		os.Exit(1)
+	}
+
+	return cfg
 }
 
 func findConfigPath(startDir, fileName string) (string, error) {
