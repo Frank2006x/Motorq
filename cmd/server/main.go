@@ -30,9 +30,11 @@ func main() {
 
 	fleetSvc := service.NewFleetService(queries)
 	vehicleSvc := service.NewVehicleService(queries)
+	telemetrySvc := service.NewTelemetryService(queries)
 
 	fleetHandler := handler.NewFleetHandler(fleetSvc)
 	vehicleHandler := handler.NewVehicleHandler(vehicleSvc)
+	telemetryHandler := handler.NewTelemetryHandler(telemetrySvc)
 
 	app := fiber.New()
 
@@ -42,6 +44,7 @@ func main() {
 
 	router.FleetRoutes(app, fleetHandler)
 	router.VehicleRoutes(app, vehicleHandler)
+	router.TelemetryRoutes(app, telemetryHandler)
 
 	port := cfg.Server.Port
 	if port == "" {

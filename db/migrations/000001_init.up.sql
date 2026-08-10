@@ -12,3 +12,14 @@ CREATE TABLE vehicle (
     model     VARCHAR(255) NOT NULL,
     status    VARCHAR(50) NOT NULL DEFAULT 'active'
 );
+
+-- Create telemetry history table
+CREATE TABLE telemetry_history (
+    id               BIGSERIAL PRIMARY KEY,
+    vehicle_id       BIGINT NOT NULL REFERENCES vehicle(id),
+    timestamp        TIMESTAMP NOT NULL DEFAULT NOW(),
+    speed_mph        DECIMAL(10, 2) NOT NULL,
+    fuel_level_percent DECIMAL(5, 2) NOT NULL,
+    engine_state     VARCHAR(50) NOT NULL,
+    odometer_miles   DECIMAL(12, 2) NOT NULL
+);

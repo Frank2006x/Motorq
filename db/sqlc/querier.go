@@ -10,12 +10,16 @@ import (
 
 type Querier interface {
 	CreateFleet(ctx context.Context, arg CreateFleetParams) (Fleet, error)
+	CreateTelemetryHistory(ctx context.Context, arg CreateTelemetryHistoryParams) (TelemetryHistory, error)
 	CreateVehicle(ctx context.Context, arg CreateVehicleParams) (Vehicle, error)
 	DeleteFleet(ctx context.Context, id int64) (Fleet, error)
 	DeleteVehicle(ctx context.Context, id int64) (Vehicle, error)
 	GetFleet(ctx context.Context, id int64) (Fleet, error)
+	GetTelemetryHistory(ctx context.Context, id int64) (TelemetryHistory, error)
 	GetVehicle(ctx context.Context, id int64) (Vehicle, error)
 	ListFleets(ctx context.Context) ([]Fleet, error)
+	ListLatestTelemetryByVehicle(ctx context.Context, arg ListLatestTelemetryByVehicleParams) ([]TelemetryHistory, error)
+	ListTelemetryHistoryByVehicle(ctx context.Context, vehicleID int64) ([]TelemetryHistory, error)
 	ListVehicles(ctx context.Context) ([]Vehicle, error)
 	ListVehiclesByFleet(ctx context.Context, fleetID int64) ([]Vehicle, error)
 	UpdateFleet(ctx context.Context, arg UpdateFleetParams) (Fleet, error)

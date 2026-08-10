@@ -4,10 +4,24 @@
 
 package sqlc
 
+import (
+	"github.com/jackc/pgx/v5/pgtype"
+)
+
 type Fleet struct {
 	ID    int64  `json:"id"`
 	Name  string `json:"name"`
 	Email string `json:"email"`
+}
+
+type TelemetryHistory struct {
+	ID               int64            `json:"id"`
+	VehicleID        int64            `json:"vehicle_id"`
+	Timestamp        pgtype.Timestamp `json:"timestamp"`
+	SpeedMph         pgtype.Numeric   `json:"speed_mph"`
+	FuelLevelPercent pgtype.Numeric   `json:"fuel_level_percent"`
+	EngineState      string           `json:"engine_state"`
+	OdometerMiles    pgtype.Numeric   `json:"odometer_miles"`
 }
 
 type Vehicle struct {
