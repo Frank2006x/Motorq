@@ -5,16 +5,21 @@ import (
 	"fmt"
 
 	"Frank2006xmotorq/db/sqlc"
+	"Frank2006xmotorq/internal/notification"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type RuleEvaluator struct {
-	q *sqlc.Queries
+	q             *sqlc.Queries
+	emailService  *notification.EmailService
 }
 
 func NewRuleEvaluator(q *sqlc.Queries) *RuleEvaluator {
-	return &RuleEvaluator{q: q}
+	return &RuleEvaluator{
+		q:             q,
+		emailService:  notification.NewEmailService(),
+	}
 }
 
 // RuleResult holds the result of evaluating a rule
@@ -159,8 +164,20 @@ func (e *RuleEvaluator) numericToFloat64(n pgtype.Numeric) float64 {
 }
 
 // CheckRulesAndUpdateStatus checks all rules and updates telemetry status
+// Sends email alerts for any rule violations
 func (e *RuleEvaluator) CheckRulesAndUpdateStatus(ctx context.Context, telemetryID int64) error {
 	telemetry, err := e.q.GetTelemetryHistory(ctx, telemetryID)
+	if err != nil {
+		return err
+	}
+
+	// Get vehicle and fleet info for email
+	vehicle, err := e.q.GetVehicle(ctx, telemetry.VehicleID)
+	if err != nil {
+		return err
+	}
+
+	fleet, err := e.q.GetFleet(ctx, vehicle.FleetID)
 	if err != nil {
 		return err
 	}
@@ -170,12 +187,23 @@ func (e *RuleEvaluator) CheckRulesAndUpdateStatus(ctx context.Context, telemetry
 		return err
 	}
 
-	// Determine overall status
+	// Determine overall status and send emails for violations
 	allPassed := true
 	for _, result := range results {
 		if !result.Passed {
 			allPassed = false
-			break
+			// Send email alert for this violation
+			fmt.Printf("🚨 Rule Violation: %s\n", result.Message)
+			err := e.emailService.SendRuleViolationAlert(
+				ctx,
+				fleet.Email,
+				vehicle.Model,
+				result.Message,
+				string(result.Priority),
+			)
+			if err != nil {
+				fmt.Printf("❌ Failed to send alert email: %v\n", err)
+			}
 		}
 	}
 
